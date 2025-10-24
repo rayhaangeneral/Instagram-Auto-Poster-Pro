@@ -1,0 +1,120 @@
+{% extends "premium_base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Activity Logs</h2>
+    <p>Monitor your Instagram automation activities</p>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>📝 Upload Activity Log</h3>
+    </div>
+    
+    <div class="log-container" id="logContainer">
+{% for log in logs %}
+{{ log }}
+{% else %}
+// No logs available. Start the uploader to see logs here.
+{% endfor %}
+    </div>
+    
+    <div style="margin-top: var(--space-5); display: flex; gap: var(--space-3); flex-wrap: wrap;">
+        <button id="refreshLogs" class="btn">
+            <span>🔄 Refresh Logs</span>
+        </button>
+        <button id="clearLogs" class="btn btn-warning">
+            <span>🗑 Clear Logs</span>
+        </button>
+        <button id="downloadLogs" class="btn btn-info">
+            <span>💾 Download Logs</span>
+        </button>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>📊 System Statistics</h3>
+    </div>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-4); margin-top: var(--space-4);">
+        <div style="background: linear-gradient(135deg, var(--primary-light), var(--primary)); border: 1px solid var(--primary-dark); border-radius: var(--radius-xl); padding: var(--space-4); text-align: center;">
+            <div style="font-size: 2rem; font-weight: 700; color: var(--text-on-gradient);">0</div>
+            <div style="color: var(--text-on-gradient); margin-top: var(--space-1);">Total Uploads</div>
+        </div>
+        
+        <div style="background: linear-gradient(135deg, var(--success-light), var(--success)); border: 1px solid var(--success-dark); border-radius: var(--radius-xl); padding: var(--space-4); text-align: center;">
+            <div style="font-size: 2rem; font-weight: 700; color: var(--text-on-gradient);">0</div>
+            <div style="color: var(--text-on-gradient); margin-top: var(--space-1);">Successful</div>
+        </div>
+        
+        <div style="background: linear-gradient(135deg, var(--danger-light), var(--danger)); border: 1px solid var(--danger-dark); border-radius: var(--radius-xl); padding: var(--space-4); text-align: center;">
+            <div style="font-size: 2rem; font-weight: 700; color: var(--text-on-gradient);">0</div>
+            <div style="color: var(--text-on-gradient); margin-top: var(--space-1);">Failed</div>
+        </div>
+        
+        <div style="background: linear-gradient(135deg, var(--warning-light), var(--warning)); border: 1px solid var(--warning-dark); border-radius: var(--radius-xl); padding: var(--space-4); text-align: center;">
+            <div style="font-size: 2rem; font-weight: 700; color: var(--text-on-gradient);">0</div>
+            <div style="color: var(--text-on-gradient); margin-top: var(--space-1);">Pending</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function refreshLogs() {
+        fetch('/status')
+            .then(response => response.json())
+            .then(data => {
+                const logContainer = document.getElementById('logContainer');
+                if (data.log.length > 0) {
+                    logContainer.innerHTML = data.log.join('\n');
+                } else {
+                    logContainer.innerHTML = '// No logs available. Start the uploader to see logs here.';
+                }
+                
+                // Scroll to bottom
+                logContainer.scrollTop = logContainer.scrollHeight;
+            })
+            .catch(error => console.error('Error refreshing logs:', error));
+    }
+    
+    function clearLogs() {
+        if (confirm('Are you sure you want to clear the logs? This action cannot be undone.')) {
+            // In a real implementation, we would have a clear logs endpoint
+            document.getElementById('logContainer').innerHTML = '// Logs cleared successfully.';
+        }
+    }
+    
+    function downloadLogs() {
+        fetch('/status')
+            .then(response => response.json())
+            .then(data => {
+                const logText = data.log.join('\n');
+                const blob = new Blob([logText], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'instagram-upload-logs.txt';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            })
+            .catch(error => alert('Error downloading logs: ' + error));
+    }
+    
+    // Event listeners
+    document.getElementById('refreshLogs').addEventListener('click', refreshLogs);
+    document.getElementById('clearLogs').addEventListener('click', clearLogs);
+    document.getElementById('downloadLogs').addEventListener('click', downloadLogs);
+    
+    // Auto-refresh logs every 5 seconds
+    setInterval(refreshLogs, 5000);
+    
+    // Initial scroll to bottom
+    document.addEventListener('DOMContentLoaded', function() {
+        const logContainer = document.getElementById('logContainer');
+        logContainer.scrollTop = logContainer.scrollHeight;
+    });
+</script>
+{% endblock %}

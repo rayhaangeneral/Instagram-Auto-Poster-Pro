@@ -1,0 +1,92 @@
+{% extends "premium_base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h2>System Configuration</h2>
+    <p>Configure your Instagram automation settings</p>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>🔑 Instagram Account Settings</h3>
+    </div>
+    
+    <form method="POST" action="{{ url_for('config_page') }}">
+        <div class="form-group">
+            <label for="instagram_username">Instagram Username</label>
+            <input type="text" id="instagram_username" name="instagram_username" 
+                   value="{{ config.instagram_username if config_exists else '' }}" 
+                   placeholder="Enter your Instagram username" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="instagram_password">Instagram Password</label>
+            <input type="password" id="instagram_password" name="instagram_password" 
+                   value="{{ config.instagram_password if config_exists else '' }}" 
+                   placeholder="Enter your Instagram password" required>
+        </div>
+        
+        <div class="card" style="margin: var(--space-6) 0;">
+            <div class="card-header">
+                <h3>📁 Directory Configuration</h3>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="image_directory">Image Directory Path</label>
+                    <input type="text" id="image_directory" name="image_directory" 
+                           value="{{ config.image_directory if config_exists else 'images/' }}" 
+                           placeholder="Path to images directory" required>
+                </div>
+                <div class="form-group">
+                    <label for="uploaded_directory">Uploaded Directory Path</label>
+                    <input type="text" id="uploaded_directory" name="uploaded_directory" 
+                           value="{{ config.uploaded_directory if config_exists else 'uploaded/' }}" 
+                           placeholder="Path to uploaded images directory" required>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="session_file">Session File Path</label>
+                <input type="text" id="session_file" name="session_file" 
+                       value="{{ config.session_file if config_exists else 'session.json' }}" 
+                       placeholder="Path to session file" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="log_file">Log File Path</label>
+                <input type="text" id="log_file" name="log_file" 
+                       value="{{ config.log_file if config_exists else 'upload.log' }}" 
+                       placeholder="Path to log file" required>
+            </div>
+        </div>
+        
+        <div style="display: flex; gap: var(--space-3); margin-top: var(--space-5);">
+            <button type="submit" class="btn btn-success">
+                <span>💾 Save Configuration</span>
+            </button>
+            <button type="reset" class="btn btn-outline">
+                <span>🔄 Reset Form</span>
+            </button>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>ℹ️ Configuration Information</h3>
+    </div>
+    
+    <div class="note">
+        <strong>Important Configuration Notes:</strong>
+        <ul style="margin-top: var(--space-2); padding-left: var(--space-5);">
+            <li>Instagram credentials are stored locally and used only for authentication</li>
+            <li>Session file stores your login session to avoid repeated logins</li>
+            <li>Make sure the image and uploaded directories exist and are writable</li>
+            <li>Place your images in the image directory before starting the uploader</li>
+            <li>Log file will contain detailed information about upload activities</li>
+            <li>After saving, test your configuration on the dashboard</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}

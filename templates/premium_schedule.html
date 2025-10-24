@@ -1,0 +1,292 @@
+{% extends "premium_base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Post Scheduling</h2>
+    <p>Schedule individual posts with custom timing</p>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>📅 Schedule Individual Posts</h3>
+    </div>
+    
+    {% if uploaded_files %}
+        <div style="margin-bottom: var(--space-5);">
+            <div class="note">
+                <p style="color: var(--current-text-primary); margin: 0;">
+                    <strong>💡 How it works:</strong> Select images and set individual posting times. The system will automatically post each image at its designated time.
+                </p>
+            </div>
+            
+            <form id="scheduleForm">
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; margin: var(--space-4) 0;">
+                        <thead>
+                            <tr style="background: linear-gradient(135deg, var(--current-bg-secondary), var(--current-bg-tertiary)); border-bottom: 2px solid var(--current-border-color);">
+                                <th style="text-align: left; padding: var(--space-3); font-weight: 600; color: var(--current-text-primary);">Select</th>
+                                <th style="text-align: left; padding: var(--space-3); font-weight: 600; color: var(--current-text-primary);">Preview</th>
+                                <th style="text-align: left; padding: var(--space-3); font-weight: 600; color: var(--current-text-primary);">Filename</th>
+                                <th style="text-align: left; padding: var(--space-3); font-weight: 600; color: var(--current-text-primary);">Schedule Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for file in uploaded_files %}
+                                <tr style="border-bottom: 1px solid var(--current-border-color); background: linear-gradient(135deg, var(--current-bg-card), var(--current-bg-secondary));">
+                                    <td style="padding: var(--space-3);">
+                                        <input type="checkbox" name="selected_files" value="{{ file }}" style="transform: scale(1.3);">
+                                    </td>
+                                    <td style="padding: var(--space-3);">
+                                        <div style="width: 60px; height: 60px; overflow: hidden; border-radius: var(--radius-md); border: 1px solid var(--current-border-color);">
+                                            <img src="{{ url_for('serve_uploaded_file', filename=file) }}" alt="{{ file }}" style="width: 100%; height: 100%; object-fit: cover;">
+                                        </div>
+                                    </td>
+                                    <td style="padding: var(--space-3); color: var(--current-text-primary);">
+                                        {{ file }}
+                                    </td>
+                                    <td style="padding: var(--space-3);">
+                                        <input type="datetime-local" name="schedule_time_{{ file }}" style="width: 100%; padding: var(--space-2); border: 1px solid var(--current-border-color); border-radius: var(--radius); background: linear-gradient(135deg, var(--current-bg-card), var(--current-bg-secondary)); color: var(--current-text-primary);" required>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div style="margin-top: var(--space-5); display: flex; gap: var(--space-3); flex-wrap: wrap;">
+                    <button type="submit" class="btn btn-success">
+                        <span>⏰ Schedule Selected Posts</span>
+                    </button>
+                    <button type="button" id="selectAll" class="btn btn-info">
+                        <span>✅ Select All</span>
+                    </button>
+                    <button type="button" id="deselectAll" class="btn btn-warning">
+                        <span>❌ Deselect All</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    {% else %}
+        <div style="text-align: center; padding: var(--space-8) var(--space-4); color: var(--current-text-secondary);">
+            <div style="font-size: 3rem; margin-bottom: var(--space-3);">📅</div>
+            <h3>No Uploaded Files</h3>
+            <p style="margin-top: var(--space-2);">Upload some files first to schedule them for posting.</p>
+            <a href="{{ url_for('index') }}" class="btn" style="margin-top: var(--space-4);">
+                <span>⬆ Upload Files</span>
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>🕒 Scheduled Posts</h3>
+    </div>
+    
+    {% if scheduled_posts %}
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; margin: var(--space-4) 0;">
+                <thead>
+                    <tr style="background: linear-gradient(135deg, var(--current-bg-secondary), var(--current-bg-tertiary)); border-bottom: 2px solid var(--current-border-color);">
+                        <th style="text-align: left; padding: var(--space-3); font-weight: 600; color: var(--current-text-primary);">Preview</th>
+                        <th style="text-align: left; padding: var(--space-3); font-weight: 600; color: var(--current-text-primary);">Filename</th>
+                        <th style="text-align: left; padding: var(--space-3); font-weight: 600; color: var(--current-text-primary);">Scheduled Time</th>
+                        <th style="text-align: left; padding: var(--space-3); font-weight: 600; color: var(--current-text-primary);">Status</th>
+                        <th style="text-align: left; padding: var(--space-3); font-weight: 600; color: var(--current-text-primary);">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for post in scheduled_posts %}
+                        <tr style="border-bottom: 1px solid var(--current-border-color); background: linear-gradient(135deg, var(--current-bg-card), var(--current-bg-secondary));">
+                            <td style="padding: var(--space-3);">
+                                <div style="width: 60px; height: 60px; overflow: hidden; border-radius: var(--radius-md); border: 1px solid var(--current-border-color);">
+                                    <img src="{{ url_for('serve_uploaded_file', filename=post.filename) }}" alt="{{ post.filename }}" style="width: 100%; height: 100%; object-fit: cover;">
+                                </div>
+                            </td>
+                            <td style="padding: var(--space-3); color: var(--current-text-primary);">
+                                {{ post.filename }}
+                            </td>
+                            <td style="padding: var(--space-3); color: var(--current-text-secondary);">
+                                {{ post.scheduled_time[:19].replace('T', ' ') }}
+                            </td>
+                            <td style="padding: var(--space-3);">
+                                {% if post.status == "pending" %}
+                                    <span style="background: linear-gradient(135deg, var(--info-light), var(--info)); color: var(--text-on-gradient); padding: var(--space-1) var(--space-2); border-radius: var(--radius-full); font-size: 0.875rem; font-weight: 500;">
+                                        Pending
+                                    </span>
+                                {% elif post.status == "posted" %}
+                                    <span style="background: linear-gradient(135deg, var(--success-light), var(--success)); color: var(--text-on-gradient); padding: var(--space-1) var(--space-2); border-radius: var(--radius-full); font-size: 0.875rem; font-weight: 500;">
+                                        Posted
+                                    </span>
+                                {% else %}
+                                    <span style="background: linear-gradient(135deg, var(--danger-light), var(--danger)); color: var(--text-on-gradient); padding: var(--space-1) var(--space-2); border-radius: var(--radius-full); font-size: 0.875rem; font-weight: 500;">
+                                        {{ post.status }}
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td style="padding: var(--space-3);">
+                                <button class="btn btn-danger btn-icon cancel-schedule" data-filename="{{ post.filename }}" style="padding: var(--space-2);">
+                                    <span>❌</span>
+                                </button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <div style="margin-top: var(--space-4); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-3);">
+            <div style="color: var(--current-text-secondary);">
+                Showing {{ scheduled_posts|length }} scheduled post{% if scheduled_posts|length != 1 %}s{% endif %}
+            </div>
+            <div>
+                <button id="clearAllScheduled" class="btn btn-warning">
+                    <span>🗑 Clear All Scheduled</span>
+                </button>
+            </div>
+        </div>
+    {% else %}
+        <div style="text-align: center; padding: var(--space-6) var(--space-4); color: var(--current-text-secondary);">
+            <div style="font-size: 3rem; margin-bottom: var(--space-3);">🕒</div>
+            <h3>No Scheduled Posts</h3>
+            <p style="margin-top: var(--space-2);">Schedule some posts to see them appear here.</p>
+            <div class="note">
+                <p style="color: var(--current-text-primary); margin: 0;">
+                    <strong>ℹ️ How automatic posting works:</strong> Once you schedule posts, the system automatically monitors and posts each image at its designated time. No manual intervention is required.
+                </p>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+    // Select all functionality
+    document.getElementById('selectAll')?.addEventListener('click', function() {
+        const checkboxes = document.querySelectorAll('input[name="selected_files"]');
+        checkboxes.forEach(checkbox => checkbox.checked = true);
+    });
+    
+    // Deselect all functionality
+    document.getElementById('deselectAll')?.addEventListener('click', function() {
+        const checkboxes = document.querySelectorAll('input[name="selected_files"]');
+        checkboxes.forEach(checkbox => checkbox.checked = false);
+    });
+    
+    // Schedule form submission
+    document.getElementById('scheduleForm')?.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const selectedFiles = formData.getAll('selected_files');
+        
+        if (selectedFiles.length === 0) {
+            alert('Please select at least one file to schedule.');
+            return;
+        }
+        
+        // Collect schedule times for selected files
+        const scheduleData = [];
+        let valid = true;
+        
+        selectedFiles.forEach(file => {
+            const scheduleTimeInput = document.querySelector(`input[name="schedule_time_${file}"]`);
+            const scheduleTime = scheduleTimeInput.value;
+            
+            if (!scheduleTime) {
+                alert(`Please set a schedule time for ${file}`);
+                valid = false;
+                return;
+            }
+            
+            scheduleData.push({
+                filename: file,
+                scheduled_time: scheduleTime
+            });
+        });
+        
+        if (!valid) {
+            return;
+        }
+        
+        // Submit schedule data
+        const submitButton = document.querySelector('button[type="submit"]');
+        const originalText = submitButton.innerHTML;
+        submitButton.innerHTML = '<span>🔄 Scheduling...</span>';
+        submitButton.disabled = true;
+        
+        fetch('/schedule_posts', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ posts: scheduleData })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+            submitButton.innerHTML = originalText;
+            submitButton.disabled = false;
+        })
+        .catch(error => {
+            alert('Error scheduling posts: ' + error);
+            submitButton.innerHTML = originalText;
+            submitButton.disabled = false;
+        });
+    });
+    
+    // Cancel schedule functionality
+    document.querySelectorAll('.cancel-schedule').forEach(button => {
+        button.addEventListener('click', function() {
+            const filename = this.getAttribute('data-filename');
+            
+            if (confirm(`Are you sure you want to cancel the schedule for ${filename}?`)) {
+                fetch('/cancel_schedule', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ filename: filename })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        alert(data.message);
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    alert('Error canceling schedule: ' + error);
+                });
+            }
+        });
+    });
+    
+    // Clear all scheduled posts
+    document.getElementById('clearAllScheduled')?.addEventListener('click', function() {
+        if (confirm('Are you sure you want to clear all scheduled posts?')) {
+            fetch('/clear_all_scheduled', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert(data.message);
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('Error clearing scheduled posts: ' + error);
+            });
+        }
+    });
+</script>
+{% endblock %}

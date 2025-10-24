@@ -1,0 +1,142 @@
+{% extends "premium_base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Upload History</h2>
+    <p>Track all your Instagram media uploads</p>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>📋 Upload Records</h3>
+    </div>
+    
+    {% if history %}
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; margin: var(--space-4) 0;">
+                <thead>
+                    <tr style="background: linear-gradient(135deg, var(--current-bg-secondary), var(--current-bg-tertiary)); border-bottom: 2px solid var(--current-border-color);">
+                        <th style="text-align: left; padding: var(--space-3); font-weight: 600; color: var(--current-text-primary);">ID</th>
+                        <th style="text-align: left; padding: var(--space-3); font-weight: 600; color: var(--current-text-primary);">Filename</th>
+                        <th style="text-align: left; padding: var(--space-3); font-weight: 600; color: var(--current-text-primary);">Status</th>
+                        <th style="text-align: left; padding: var(--space-3); font-weight: 600; color: var(--current-text-primary);">Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in history %}
+                        <tr style="border-bottom: 1px solid var(--current-border-color); background: linear-gradient(135deg, var(--current-bg-card), var(--current-bg-secondary));">
+                            <td style="padding: var(--space-3); color: var(--current-text-secondary);">{{ record.id }}</td>
+                            <td style="padding: var(--space-3); color: var(--current-text-primary);">
+                                <div style="display: flex; align-items: center; gap: var(--space-2);">
+                                    <span>{{ record.filename }}</span>
+                                </div>
+                            </td>
+                            <td style="padding: var(--space-3);">
+                                {% if record.status == "SUCCESS" %}
+                                    <span style="background: linear-gradient(135deg, var(--success-light), var(--success)); color: var(--text-on-gradient); padding: var(--space-1) var(--space-2); border-radius: var(--radius-full); font-size: 0.875rem; font-weight: 500;">
+                                        {{ record.status }}
+                                    </span>
+                                {% else %}
+                                    <span style="background: linear-gradient(135deg, var(--danger-light), var(--danger)); color: var(--text-on-gradient); padding: var(--space-1) var(--space-2); border-radius: var(--radius-full); font-size: 0.875rem; font-weight: 500;">
+                                        Error
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td style="padding: var(--space-3); color: var(--current-text-secondary);">
+                                {{ record.timestamp[:19].replace('T', ' ') }}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <div style="margin-top: var(--space-4); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-3);">
+            <div style="color: var(--current-text-secondary);">
+                Showing {{ history|length }} record{% if history|length != 1 %}s{% endif %}
+            </div>
+            <div>
+                <button id="clearHistory" class="btn btn-warning">
+                    <span>🗑 Clear History</span>
+                </button>
+                <button id="exportHistory" class="btn btn-info" style="margin-left: var(--space-2);">
+                    <span>💾 Export History</span>
+                </button>
+            </div>
+        </div>
+    {% else %}
+        <div style="text-align: center; padding: var(--space-8) var(--space-4); color: var(--current-text-secondary);">
+            <div style="font-size: 3rem; margin-bottom: var(--space-3);">📋</div>
+            <h3>No Upload History</h3>
+            <p style="margin-top: var(--space-2);">Upload some files to see them appear here.</p>
+        </div>
+    {% endif %}
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>📊 Statistics</h3>
+    </div>
+    
+    {% if history %}
+        {% set success_count = history|selectattr('status', 'equalto', 'SUCCESS')|list|length %}
+        {% set error_count = history|length - success_count %}
+        {% set total_count = history|length %}
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-4); margin-top: var(--space-4);">
+            <div style="background: linear-gradient(135deg, var(--primary-light), var(--primary)); border: 1px solid var(--primary-dark); border-radius: var(--radius-xl); padding: var(--space-4); text-align: center;">
+                <div style="font-size: 2rem; font-weight: 700; color: var(--text-on-gradient);">{{ total_count }}</div>
+                <div style="color: var(--text-on-gradient); margin-top: var(--space-1);">Total Uploads</div>
+            </div>
+            
+            <div style="background: linear-gradient(135deg, var(--success-light), var(--success)); border: 1px solid var(--success-dark); border-radius: var(--radius-xl); padding: var(--space-4); text-align: center;">
+                <div style="font-size: 2rem; font-weight: 700; color: var(--text-on-gradient);">{{ success_count }}</div>
+                <div style="color: var(--text-on-gradient); margin-top: var(--space-1);">Successful</div>
+            </div>
+            
+            <div style="background: linear-gradient(135deg, var(--danger-light), var(--danger)); border: 1px solid var(--danger-dark); border-radius: var(--radius-xl); padding: var(--space-4); text-align: center;">
+                <div style="font-size: 2rem; font-weight: 700; color: var(--text-on-gradient);">{{ error_count }}</div>
+                <div style="color: var(--text-on-gradient); margin-top: var(--space-1);">Failed</div>
+            </div>
+            
+            <div style="background: linear-gradient(135deg, var(--info-light), var(--info)); border: 1px solid var(--info-dark); border-radius: var(--radius-xl); padding: var(--space-4); text-align: center;">
+                <div style="font-size: 2rem; font-weight: 700; color: var(--text-on-gradient);">{{ (success_count / total_count * 100) | round(1) if total_count > 0 else 0 }}%</div>
+                <div style="color: var(--text-on-gradient); margin-top: var(--space-1);">Success Rate</div>
+            </div>
+        </div>
+    {% else %}
+        <p style="text-align: center; color: var(--current-text-secondary); padding: var(--space-4);">No statistics available yet.</p>
+    {% endif %}
+</div>
+
+<script>
+    function clearHistory() {
+        if (confirm('Are you sure you want to clear the upload history? This action cannot be undone.')) {
+            // In a real implementation, we would have a clear history endpoint
+            fetch('/clear_history', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    location.reload();
+                } else {
+                    alert('Error clearing history: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('Error clearing history: ' + error);
+            });
+        }
+    }
+    
+    function exportHistory() {
+        // In a real implementation, we would have an export history endpoint
+        window.location.href = '/export_history';
+    }
+    
+    // Event listeners
+    document.getElementById('clearHistory')?.addEventListener('click', clearHistory);
+    document.getElementById('exportHistory')?.addEventListener('click', exportHistory);
+</script>
+{% endblock %}

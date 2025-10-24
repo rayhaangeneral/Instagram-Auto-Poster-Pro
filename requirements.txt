@@ -1,0 +1,5 @@
+instagrapi
+Pillow
+Flask
+Werkzeug
+cryptography

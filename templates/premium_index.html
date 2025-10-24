@@ -1,0 +1,234 @@
+{% extends "premium_base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Control Dashboard</h2>
+    <p>Manage your Instagram automation with precision and ease</p>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>📊 System Status</h3>
+    </div>
+    
+    <div id="statusBanner" class="status-banner {{ 'running' if status.running else ('error' if 'Error' in status.message else 'ready') }}">
+        {{ status.message }}
+    </div>
+
+    {% if config_exists %}
+        <div class="actions">
+            <button id="startButton" class="btn btn-success" {{ 'disabled' if status.running else '' }}>
+                <span>▶ Start Scheduled Monitoring</span>
+            </button>
+            <button id="stopButton" class="btn btn-danger" {{ 'disabled' if not status.running else '' }}>
+                <span>⏹ Stop Scheduled Monitoring</span>
+            </button>
+            <button id="testAuthButton" class="btn btn-info">
+                <span>🔒 Test Authentication</span>
+            </button>
+        </div>
+        
+        <div id="authTestResult" style="margin: var(--space-5) 0;"></div>
+        
+        <div class="card" style="margin-top: var(--space-6);">
+            <div class="card-header">
+                <h3>⬆ Upload Media Files</h3>
+            </div>
+            
+            <div class="form-group">
+                <label for="imageUpload">Select images to upload (PNG, JPG, JPEG):</label>
+                <input type="file" id="imageUpload" accept=".png,.jpg,.jpeg" multiple>
+                <button id="uploadButton" class="btn" style="margin-top: var(--space-3);">
+                    <span>⬆ Upload Selected Files</span>
+                </button>
+            </div>
+            <div id="uploadResult" style="margin: var(--space-3) 0;"></div>
+        </div>
+        
+        <div class="card" style="margin-top: var(--space-6);">
+            <div class="card-header">
+                <h3>🖼 Uploaded Media Gallery</h3>
+            </div>
+            
+            {% if uploaded_files %}
+                <div class="file-grid">
+                    {% for file in uploaded_files %}
+                        <div class="file-item">
+                            <img src="{{ url_for('uploaded_file', filename=file) }}" alt="{{ file }}">
+                            <div class="filename">{{ file }}</div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p style="text-align: center; color: var(--current-text-secondary); padding: var(--space-5);">No images uploaded yet. Upload some files to get started.</p>
+            {% endif %}
+        </div>
+        
+        <div class="note">
+            <strong>Quick Instructions:</strong>
+            <ul style="margin-top: var(--space-2); padding-left: var(--space-5);">
+                <li>Upload your images using the file selector above</li>
+                <li>Go to the "Schedule" page to set individual posting times</li>
+                <li>Click "Start Scheduled Monitoring" to begin monitoring for scheduled posts</li>
+                <li>Use "Test Authentication" to verify your Instagram credentials</li>
+                <li>View logs to monitor the progress of your uploads</li>
+            </ul>
+        </div>
+    {% else %}
+        <div class="status-banner error">
+            <p><strong>Configuration Required:</strong> Please set up your configuration first.</p>
+            <a href="{{ url_for('config_page') }}" class="btn" style="margin-top: var(--space-3);">
+                <span>⚙ Configure Now</span>
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+    // Handle start button click
+    document.getElementById('startButton').addEventListener('click', function() {
+        const buttonText = this.innerHTML;
+        this.innerHTML = '<span>🔄 Processing...</span>';
+        this.disabled = true;
+        document.getElementById('stopButton').disabled = true;
+        
+        fetch('/start', {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                updateStatus();
+            } else {
+                alert('Error: ' + data.message);
+            }
+            this.innerHTML = buttonText;
+            this.disabled = false;
+            document.getElementById('stopButton').disabled = false;
+        })
+        .catch(error => {
+            alert('Error starting uploader: ' + error);
+            this.innerHTML = buttonText;
+            this.disabled = false;
+            document.getElementById('stopButton').disabled = false;
+        });
+    });
+    
+    // Handle stop button click
+    document.getElementById('stopButton').addEventListener('click', function() {
+        const buttonText = this.innerHTML;
+        this.innerHTML = '<span>🔄 Processing...</span>';
+        this.disabled = true;
+        document.getElementById('startButton').disabled = true;
+        
+        fetch('/stop', {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                updateStatus();
+            } else {
+                alert('Error: ' + data.message);
+            }
+            this.innerHTML = buttonText;
+            this.disabled = false;
+            document.getElementById('startButton').disabled = false;
+        })
+        .catch(error => {
+            alert('Error stopping uploader: ' + error);
+            this.innerHTML = buttonText;
+            this.disabled = false;
+            document.getElementById('startButton').disabled = false;
+        });
+    });
+    
+    // Handle file upload
+    document.getElementById('uploadButton').addEventListener('click', function() {
+        const fileInput = document.getElementById('imageUpload');
+        const files = fileInput.files;
+        
+        if (files.length === 0) {
+            alert('Please select at least one file to upload.');
+            return;
+        }
+        
+        const formData = new FormData();
+        // Handle multiple files properly
+        for (let i = 0; i < files.length; i++) {
+            formData.append('file', files[i]);
+        }
+        
+        const uploadButton = this;
+        const originalText = uploadButton.innerHTML;
+        uploadButton.innerHTML = '<span>🔄 Uploading...</span>';
+        uploadButton.disabled = true;
+        
+        fetch('/upload', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            const resultDiv = document.getElementById('uploadResult');
+            if (data.status === 'success') {
+                resultDiv.innerHTML = '<div class="status-banner ready">' + data.message + '</div>';
+                // Clear the file input
+                fileInput.value = '';
+                // Refresh the page to show updated file list
+                setTimeout(() => {
+                    location.reload();
+                }, 1500);
+            } else if (data.status === 'partial') {
+                resultDiv.innerHTML = '<div class="status-banner warning">' + data.message + '</div>';
+                // Clear the file input
+                fileInput.value = '';
+                // Refresh the page to show updated file list
+                setTimeout(() => {
+                    location.reload();
+                }, 1500);
+            } else {
+                resultDiv.innerHTML = '<div class="status-banner error">' + data.message + '</div>';
+            }
+            uploadButton.innerHTML = originalText;
+            uploadButton.disabled = false;
+        })
+        .catch(error => {
+            const resultDiv = document.getElementById('uploadResult');
+            resultDiv.innerHTML = '<div class="status-banner error">Upload error: ' + error + '</div>';
+            uploadButton.innerHTML = originalText;
+            uploadButton.disabled = false;
+        });
+    });
+    
+    // Handle authentication test
+    document.getElementById('testAuthButton').addEventListener('click', function() {
+        const resultDiv = document.getElementById('authTestResult');
+        resultDiv.innerHTML = '<div class="status-banner warning">Testing authentication...</div>';
+        
+        const testButton = this;
+        const originalText = testButton.innerHTML;
+        testButton.innerHTML = '<span>🔄 Testing...</span>';
+        testButton.disabled = true;
+        
+        fetch('/test_auth', {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                resultDiv.innerHTML = '<div class="status-banner ready">' + data.message + '</div>';
+            } else {
+                resultDiv.innerHTML = '<div class="status-banner error">' + data.message + '</div>';
+            }
+            testButton.innerHTML = originalText;
+            testButton.disabled = false;
+        })
+        .catch(error => {
+            resultDiv.innerHTML = '<div class="status-banner error">Authentication test error: ' + error + '</div>';
+            testButton.innerHTML = originalText;
+            testButton.disabled = false;
+        });
+    });
+</script>
+{% endblock %}
