@@ -61,5 +61,8 @@ static/
 # Test files
 test_*.py
 
-# Documentation files
-*.md
+# Specific documentation files containing sensitive information
+# Note: README.md is intentionally not included here to allow it to be committed
+config.md
+secrets.md
+credentials.md
